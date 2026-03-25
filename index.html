@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8"> <!-- 🔥 ESTO ARREGLA TODO -->
+  <title>Mi Tienda</title>
+</head>
+<body>
+
+<h1>Mi Tienda</h1>
+
+<input 
+  type="text" 
+  id="buscador" 
+  placeholder="Buscar producto..." 
+  oninput="filtrarProductos()"
+/>
+
+<button onclick="agregarProducto()"> Agregar producto</button>
+
+<ul id="lista"></ul>
+
+<h2>Productos para comprar</h2>
+<ul id="compras"></ul>
+
+<script src="app.js"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("Service Worker activo"));
+}
+</script>
+
+</body>
+</html>
