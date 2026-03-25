@@ -217,10 +217,11 @@ function mostrarProductos(filtro = "") {
         <br><br>
         `}
 
-        <button onclick="noHay(${index})">❌ No hay</button>
-        <button onclick="poco(${index})">⚠️ Poco</button>
-        <button onclick="actualizar(${index})">🔄 Actualizar</button>
-        <button onclick="eliminarProducto(${index})">🗑️</button>
+        <button onclick="vender(${index})">🛒 Vender 1</button>
+<button onclick="noHay(${index})">❌ No hay</button>
+<button onclick="poco(${index})">⚠️ Poco</button>
+<button onclick="actualizar(${index})">🔄 Actualizar</button>
+<button onclick="eliminarProducto(${index})">🗑️</button>
       </div>
     `;
 
@@ -335,6 +336,42 @@ function poco(i) {
 // 🔹 Eliminar producto
 function eliminarProducto(i) {
   productos.splice(i, 1);
+  guardar();
+  mostrarProductos();
+}
+
+function vender(i) {
+  let p = productos[i];
+
+  if (p.tipo === "cajas") {
+    // Convertimos todo a unidades
+    let total = p.cajas * p.unidadesPorCaja;
+
+    if (total > 0) {
+      total -= 1; // vende 1 unidad
+
+      // recalcular cajas
+      p.cajas = Math.floor(total / p.unidadesPorCaja);
+    }
+
+  } else {
+    if (p.unidades > 0) {
+      p.unidades -= 1;
+    }
+  }
+
+  // 🔥 ACTUALIZAR ESTADO AUTOMÁTICO
+  let totalFinal = calcularStock(p);
+
+  if (totalFinal === 0) {
+    p.estado = "agotado";
+    p.comprado = false;
+  } else if (totalFinal < 5) {
+    p.estado = "poco";
+  } else {
+    p.estado = "disponible";
+  }
+
   guardar();
   mostrarProductos();
 }
