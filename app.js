@@ -59,7 +59,7 @@ function mostrarCategorias() {
   mostrarAgotados();
 }
 
-// 🔴 Mostrar agotados (pantalla principal)
+// 🔴 Mostrar agotados
 function mostrarAgotados() {
   let cont = document.getElementById("agotados");
   cont.innerHTML = "<h3>❌ Productos agotados</h3>";
@@ -172,8 +172,20 @@ function mostrarProductos() {
 
         Stock: ${detalle} → ${total} (${p.estado})<br><br>
 
-        <button onclick="restarUno(${index})">➖ 1</button>
+        <!-- 🔥 ACTUALIZAR CAJAS RÁPIDO -->
+        ${p.tipo === "cajas" ? `
+        Cajas:
+        <input type="number" id="cajas${index}" value="${p.cajas}" style="width:60px;">
+        Unid/Caja:
+        <input type="number" id="unidadCaja${index}" value="${p.unidadesPorCaja}" style="width:60px;">
+        <button onclick="guardarCajas(${index})">💾</button><br><br>
+        ` : `
+        Unidades:
+        <input type="number" id="unidades${index}" value="${p.unidades}" style="width:60px;">
+        <button onclick="guardarUnidades(${index})">💾</button><br><br>
+        `}
 
+        <button onclick="restarUno(${index})">➖ 1</button>
         <button onclick="noHay(${index})">❌ No hay</button>
         <button onclick="poco(${index})">⚠️ Poco</button>
         <button onclick="actualizar(${index})">🔄 Actualizar</button>
@@ -185,26 +197,44 @@ function mostrarProductos() {
   });
 }
 
-// 🔹 RESTAR 1 UNIDAD (LO QUE QUERÍAS)
+// 🔹 RESTAR 1
 function restarUno(i) {
   let p = productos[i];
 
   if (p.tipo === "cajas") {
     let total = p.cajas * p.unidadesPorCaja;
-
     if (total > 0) {
       total -= 1;
       p.cajas = Math.floor(total / p.unidadesPorCaja);
     }
-
   } else {
-    if (p.unidades > 0) {
-      p.unidades -= 1;
-    }
+    if (p.unidades > 0) p.unidades -= 1;
   }
 
   actualizarEstado(p);
+  guardar();
+  mostrarProductos();
+}
 
+// 🔹 GUARDAR CAJAS
+function guardarCajas(i) {
+  let p = productos[i];
+
+  p.cajas = parseInt(document.getElementById(`cajas${i}`).value) || 0;
+  p.unidadesPorCaja = parseInt(document.getElementById(`unidadCaja${i}`).value) || 0;
+
+  actualizarEstado(p);
+  guardar();
+  mostrarProductos();
+}
+
+// 🔹 GUARDAR UNIDADES
+function guardarUnidades(i) {
+  let p = productos[i];
+
+  p.unidades = parseInt(document.getElementById(`unidades${i}`).value) || 0;
+
+  actualizarEstado(p);
   guardar();
   mostrarProductos();
 }
@@ -290,7 +320,7 @@ function actualizar(i) {
   mostrarProductos();
 }
 
-// 🔹 Eliminar producto
+// 🔹 Eliminar
 function eliminarProducto(i) {
   productos.splice(i, 1);
   guardar();
