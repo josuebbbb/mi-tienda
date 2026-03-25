@@ -396,21 +396,7 @@ function restarUno(i) {
     }
   }
 
-  // 🔥 ACTUALIZAR ESTADO
-  let totalFinal = calcularStock(p);
-
-  if (totalFinal === 0) {
-    p.estado = "agotado";
-    p.comprado = false;
-  } else if (totalFinal < 5) {
-    p.estado = "poco";
-  } else {
-    p.estado = "disponible";
-  }
-
-  guardar();
-  mostrarProductos();
-}
+ 
 
 // 🔹 Inicio
 mostrarCategorias();
