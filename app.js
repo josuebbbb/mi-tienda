@@ -30,6 +30,30 @@ function eliminarCategoria(cat) {
   mostrarCategorias();
 }
 
+// 🔍 FILTRAR CATEGORÍAS
+function filtrarCategorias() {
+  let texto = document.getElementById("buscadorCategorias").value.toLowerCase();
+
+  let cont = document.getElementById("categorias");
+  cont.innerHTML = "";
+
+  categorias.forEach(cat => {
+    if (!cat.includes(texto)) return;
+
+    let div = document.createElement("div");
+    div.className = "carpeta";
+
+    div.innerHTML = `
+      <span class="eliminar-cat" onclick="event.stopPropagation(); eliminarCategoria('${cat}')">✖</span>
+      📁<br><strong>${cat}</strong>
+    `;
+
+    div.onclick = () => abrirCategoria(cat);
+
+    cont.appendChild(div);
+  });
+}
+
 // 🔹 Mostrar categorías
 function mostrarCategorias() {
   let cont = document.getElementById("categorias");
@@ -52,7 +76,7 @@ function mostrarCategorias() {
   mostrarAgotados();
 }
 
-// 🔴 Agotados
+// 🔴 Mostrar agotados
 function mostrarAgotados() {
   let cont = document.getElementById("agotados");
   cont.innerHTML = "<h3>❌ Productos agotados</h3>";
@@ -73,7 +97,9 @@ function mostrarAgotados() {
     }
   });
 
-  if (!hay) cont.innerHTML += "<p>✔ Todo comprado</p>";
+  if (!hay) {
+    cont.innerHTML += "<p>✔ Todo comprado</p>";
+  }
 }
 
 // 🔹 Marcar comprado
@@ -116,13 +142,20 @@ function calcularStock(p) {
     : p.unidades;
 }
 
+// 🔍 FILTRAR PRODUCTOS
+function filtrarProductos() {
+  let texto = document.getElementById("buscadorProductos").value.toLowerCase();
+  mostrarProductos(texto);
+}
+
 // 🔹 Mostrar productos
-function mostrarProductos() {
+function mostrarProductos(filtro = "") {
   let lista = document.getElementById("lista");
   lista.innerHTML = "";
 
   productos.forEach((p, index) => {
     if (p.categoria !== categoriaActual) return;
+    if (!p.nombre.toLowerCase().includes(filtro)) return;
 
     let venta = calcularVenta(p);
     let total = calcularStock(p);
