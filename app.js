@@ -3,6 +3,11 @@ let categorias = JSON.parse(localStorage.getItem("categorias")) || [];
 
 let categoriaActual = null;
 
+// 🔹 CAPITALIZAR
+function capitalizar(texto) {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 // 🔹 Guardar
 function guardar() {
   localStorage.setItem("productos", JSON.stringify(productos));
@@ -14,7 +19,9 @@ function agregarCategoria() {
   let nombre = prompt("Nombre de la categoría:");
   if (!nombre) return;
 
-  categorias.push(nombre.toLowerCase());
+  nombre = capitalizar(nombre.toLowerCase());
+
+  categorias.push(nombre);
   guardar();
   mostrarCategorias();
 }
@@ -38,14 +45,14 @@ function filtrarCategorias() {
   cont.innerHTML = "";
 
   categorias.forEach(cat => {
-    if (!cat.includes(texto)) return;
+    if (!cat.toLowerCase().includes(texto)) return;
 
     let div = document.createElement("div");
     div.className = "carpeta";
 
     div.innerHTML = `
       <span class="eliminar-cat" onclick="event.stopPropagation(); eliminarCategoria('${cat}')">✖</span>
-      📁<br><strong>${cat}</strong>
+      📁<br><strong>${capitalizar(cat)}</strong>
     `;
 
     div.onclick = () => abrirCategoria(cat);
@@ -65,7 +72,7 @@ function mostrarCategorias() {
 
     div.innerHTML = `
       <span class="eliminar-cat" onclick="event.stopPropagation(); eliminarCategoria('${cat}')">✖</span>
-      📁<br><strong>${cat}</strong>
+      📁<br><strong>${capitalizar(cat)}</strong>
     `;
 
     div.onclick = () => abrirCategoria(cat);
@@ -88,7 +95,7 @@ function mostrarAgotados() {
       let div = document.createElement("div");
 
       div.innerHTML = `
-        • ${p.nombre} (${p.categoria})
+        • ${capitalizar(p.nombre)} (${p.categoria})
         <button onclick="marcarComprado(${index})">✔</button>
       `;
 
@@ -117,7 +124,7 @@ function abrirCategoria(cat) {
   document.getElementById("agotados").style.display = "none";
   document.getElementById("productosVista").style.display = "block";
 
-  document.getElementById("titulo").innerText = "📁 " + cat;
+  document.getElementById("titulo").innerText = "📁 " + capitalizar(cat);
 
   mostrarProductos();
 }
@@ -174,7 +181,7 @@ function mostrarProductos(filtro = "") {
     li.innerHTML = `
       <div style="border-left:5px solid ${color};padding:10px;">
         
-        <strong>${p.nombre}</strong><br><br>
+        <strong>${capitalizar(p.nombre)}</strong><br><br>
 
         Compra: $${p.compra}<br>
 
@@ -204,7 +211,7 @@ function agregarProducto() {
   if (!nombre || !compra) return;
 
   let producto = {
-    nombre: nombre.toLowerCase(),
+    nombre: capitalizar(nombre.toLowerCase()),
     compra: parseFloat(compra),
     margen: 0.2,
     estado: "disponible",
@@ -231,25 +238,26 @@ function agregarProducto() {
   mostrarProductos();
 }
 
-// 🔹 Actualizar
+// 🔹 ACTUALIZAR (ARREGLADO)
 function actualizar(i) {
   let p = productos[i];
 
   let compra = prompt("Precio compra:", p.compra);
-  if (compra) p.compra = parseFloat(compra);
+  if (compra !== null) p.compra = parseFloat(compra);
 
   let margen = prompt("Margen:", p.margen);
-  if (margen) p.margen = parseFloat(margen);
+  if (margen !== null) p.margen = parseFloat(margen);
 
   if (p.tipo === "cajas") {
-    let cajas = prompt("Cajas:", p.cajas);
-    let unidadesCaja = prompt("Unidades por caja:", p.unidadesPorCaja);
+    let cajas = prompt("Número de cajas:", p.cajas);
+    let unidadesCaja = prompt("Unidades por cada caja:", p.unidadesPorCaja);
 
-    if (cajas) p.cajas = parseInt(cajas);
-    if (unidadesCaja) p.unidadesPorCaja = parseInt(unidadesCaja);
+    if (cajas !== null) p.cajas = parseInt(cajas) || 0;
+    if (unidadesCaja !== null) p.unidadesPorCaja = parseInt(unidadesCaja) || 0;
+
   } else {
-    let unidades = prompt("Unidades:", p.unidades);
-    if (unidades) p.unidades = parseInt(unidades);
+    let unidades = prompt("Número de unidades:", p.unidades);
+    if (unidades !== null) p.unidades = parseInt(unidades) || 0;
   }
 
   let total = calcularStock(p);
