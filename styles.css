@@ -1,54 +1,69 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  font-family: Arial;
+  background: #f4f6f8;
   margin: 0;
   padding: 10px;
 }
 
 h1 {
   text-align: center;
-  color: #333;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
 }
 
 button {
-  padding: 8px 10px;
-  margin: 3px;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 10px;
   border: none;
-  border-radius: 8px;
   background: #4CAF50;
   color: white;
   cursor: pointer;
 }
 
-button:hover {
-  background: #45a049;
+#categorias {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+  gap: 10px;
+  margin-top: 20px;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
+.carpeta {
+  background: white;
+  border-radius: 15px;
+  padding: 25px;
+  text-align: center;
+  font-size: 18px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+
+.carpeta:hover {
+  transform: scale(1.05);
+}
+
+/* 🔴 BOTON ELIMINAR CATEGORIA */
+.eliminar-cat {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: red;
+  border-radius: 50%;
+  padding: 3px 6px;
+  font-size: 12px;
 }
 
 li {
   background: white;
-  padding: 12px;
-  margin-bottom: 10px;
+  padding: 15px;
   border-radius: 12px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-.poco {
-  border-left: 5px solid orange;
-}
-
-.agotado {
-  border-left: 5px solid red;
+#agotados {
+  background: #fff3f3;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 20px;
 }
