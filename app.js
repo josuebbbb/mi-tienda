@@ -1,136 +1,182 @@
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
-let compras = JSON.parse(localStorage.getItem("compras")) || [];
+let categorias = JSON.parse(localStorage.getItem("categorias")) || [];
 
-// 🔹 Guardar productos y compras
+let categoriaActual = null;
+
+// 🔹 Guardar
 function guardar() {
   localStorage.setItem("productos", JSON.stringify(productos));
+  localStorage.setItem("categorias", JSON.stringify(categorias));
 }
 
-// 🔹 Eliminar producto
-function eliminarProducto(index) {
-  if (confirm(`¿Eliminar el producto "${productos[index].nombre}"?`)) {
-    productos.splice(index, 1); // Borra del array
-    guardar(); // Guarda cambios en localStorage
-    mostrarProductos(); // Refresca la lista
-  }
+// 🔹 Crear categoría
+function agregarCategoria() {
+  let nombre = prompt("Nombre de la categoría:");
+  if (!nombre) return;
+
+  categorias.push(nombre.toLowerCase());
+  guardar();
+  mostrarCategorias();
 }
 
-function guardarCompras() {
-  localStorage.setItem("compras", JSON.stringify(compras));
+// 🔹 ELIMINAR CATEGORIA
+function eliminarCategoria(cat) {
+  if (!confirm("¿Eliminar categoría y sus productos?")) return;
+
+  categorias = categorias.filter(c => c !== cat);
+  productos = productos.filter(p => p.categoria !== cat);
+
+  guardar();
+  mostrarCategorias();
 }
 
-// 🔹 Cálculo de venta y stock
+// 🔹 Mostrar categorías
+function mostrarCategorias() {
+  let cont = document.getElementById("categorias");
+  cont.innerHTML = "";
+
+  categorias.forEach(cat => {
+    let div = document.createElement("div");
+    div.className = "carpeta";
+
+    div.innerHTML = `
+      <span class="eliminar-cat" onclick="event.stopPropagation(); eliminarCategoria('${cat}')">✖</span>
+      📁<br><strong>${cat}</strong>
+    `;
+
+    div.onclick = () => abrirCategoria(cat);
+
+    cont.appendChild(div);
+  });
+
+  mostrarAgotados();
+}
+
+// 🔴 Agotados
+function mostrarAgotados() {
+  let cont = document.getElementById("agotados");
+  cont.innerHTML = "<h3>❌ Productos agotados</h3>";
+
+  let hay = false;
+
+  productos.forEach((p, index) => {
+    if (p.estado === "agotado" && !p.comprado) {
+      let div = document.createElement("div");
+
+      div.innerHTML = `
+        • ${p.nombre} (${p.categoria})
+        <button onclick="marcarComprado(${index})">✔</button>
+      `;
+
+      cont.appendChild(div);
+      hay = true;
+    }
+  });
+
+  if (!hay) cont.innerHTML += "<p>✔ Todo comprado</p>";
+}
+
+// 🔹 Marcar comprado
+function marcarComprado(i) {
+  productos[i].comprado = true;
+  guardar();
+  mostrarCategorias();
+}
+
+// 🔹 Abrir categoría
+function abrirCategoria(cat) {
+  categoriaActual = cat;
+
+  document.getElementById("categorias").style.display = "none";
+  document.getElementById("agotados").style.display = "none";
+  document.getElementById("productosVista").style.display = "block";
+
+  document.getElementById("titulo").innerText = "📁 " + cat;
+
+  mostrarProductos();
+}
+
+// 🔙 Volver
+function volver() {
+  document.getElementById("categorias").style.display = "grid";
+  document.getElementById("agotados").style.display = "block";
+  document.getElementById("productosVista").style.display = "none";
+
+  mostrarCategorias();
+}
+
+// 🔹 Calcular
 function calcularVenta(p) {
   return (p.compra * (1 + p.margen)).toFixed(2);
 }
 
 function calcularStock(p) {
-  if (p.tipo === "cajas") return p.cajas * p.unidadesPorCaja;
-  else return p.unidades;
+  return p.tipo === "cajas"
+    ? p.cajas * p.unidadesPorCaja
+    : p.unidades;
 }
 
-// 🔹 Agregar automático a compras
-function agregarACompras(p) {
-  let existe = compras.find(c => c.nombre === p.nombre);
-  if (!existe) {
-    compras.push({
-      nombre: p.nombre,
-      fecha: new Date().toLocaleString()
-    });
-    guardarCompras();
-  }
-}
-
-// 🔹 Mostrar lista de compras
-function mostrarCompras() {
-  let lista = document.getElementById("compras");
-  lista.innerHTML = "";
-
-  compras.forEach((c, index) => {
-    let item = document.createElement("li");
-    item.classList.add("agotado");
-    item.innerHTML = `
-      ${c.nombre} <br>
-      <small>${c.fecha}</small>
-      <button onclick="eliminarCompra(${index})">✔</button>
-    `;
-    lista.appendChild(item);
-  });
-}
-
-function eliminarCompra(i) {
-  compras.splice(i, 1);
-  guardarCompras();
-  mostrarCompras();
-}
-
-// 🔹 Mostrar productos con buscador y estilo
-function mostrarProductos(filtro = "") {
+// 🔹 Mostrar productos
+function mostrarProductos() {
   let lista = document.getElementById("lista");
   lista.innerHTML = "";
 
   productos.forEach((p, index) => {
-    if (!p.nombre.toLowerCase().includes(filtro)) return;
+    if (p.categoria !== categoriaActual) return;
 
     let venta = calcularVenta(p);
     let total = calcularStock(p);
-    let detalle = p.tipo === "cajas" ? `${p.cajas} cajas (${p.unidadesPorCaja})` : `${p.unidades} unidades`;
-    let nombreBonito = p.nombre.charAt(0).toUpperCase() + p.nombre.slice(1);
 
-    // Color según estado
-    let colorEstado = p.estado === "agotado" ? "#e74c3c" : p.estado === "poco stock" ? "#f39c12" : "#27ae60";
+    let detalle = p.tipo === "cajas"
+      ? `${p.cajas} cajas (${p.unidadesPorCaja})`
+      : `${p.unidades} unidades`;
 
-    let item = document.createElement("li");
+    let color =
+      p.estado === "agotado" ? "#e74c3c" :
+      p.estado === "poco" ? "#f39c12" :
+      "#27ae60";
 
-    item.innerHTML = `
-      <div style="font-family: Arial, sans-serif; background: #fdfdfd; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
-        <strong style="font-size: 22px; color: #2c3e50;">${nombreBonito}</strong><br><br>
+    let li = document.createElement("li");
+
+    li.innerHTML = `
+      <div style="border-left:5px solid ${color};padding:10px;">
         
-        <div style="font-size: 18px; color: #16a085;">Compra: $${p.compra}</div>
-        
-        <div style="margin: 10px 0; text-align: center;">
-          <span style="color: #e67e22; font-weight: bold;">Venta:</span> 
-          <input type="number" id="ventaInput${index}" value="${venta}" 
-            style="width: 100px; text-align: center; font-size: 16px; padding: 3px; border-radius: 5px; border: 1px solid #ccc;">
-          <button onclick="cambiarVenta(${index})" style="font-size: 16px; padding: 4px 8px; margin-left: 5px; border-radius: 5px; cursor: pointer;">💾 Guardar</button>
-        </div>
+        <strong>${p.nombre}</strong><br><br>
 
-        <div style="font-size: 16px; color: ${colorEstado}; font-weight: bold;">
-          Stock: ${detalle} → ${total} (${p.estado})
-        </div><br>
+        Compra: $${p.compra}<br>
 
-        <button style="padding: 5px 10px; margin-right: 5px; font-size: 16px;" onclick="noHay(${index})">❌ No hay</button>
-        <button style="padding: 5px 10px; margin-right: 5px; font-size: 16px;" onclick="poco(${index})">⚠️ Poco</button>
-        <button style="padding: 5px 10px; margin-right: 5px; font-size: 16px;" onclick="eliminarProducto(${index})">🗑️ Eliminar</button>
-        <button style="padding: 5px 10px; font-size: 16px;" onclick="actualizar(${index})">🔄 Actualizar</button>
+        Venta:
+        <input type="number" id="venta${index}" value="${venta}" style="width:80px;">
+        <button onclick="cambiarVenta(${index})">💾</button><br><br>
+
+        Stock: ${detalle} → ${total} (${p.estado})<br><br>
+
+        <button onclick="noHay(${index})">❌ No hay</button>
+        <button onclick="poco(${index})">⚠️ Poco</button>
+        <button onclick="actualizar(${index})">🔄 Actualizar</button>
+        <button onclick="eliminarProducto(${index})">🗑️</button>
       </div>
     `;
 
-    lista.appendChild(item);
+    lista.appendChild(li);
   });
-}
-
-// 🔹 Filtrar productos
-function filtrarProductos() {
-  let texto = document.getElementById("buscador").value.toLowerCase();
-  mostrarProductos(texto);
 }
 
 // 🔹 Agregar producto
 function agregarProducto() {
   let nombre = prompt("Nombre:");
-  if (nombre) nombre = nombre.toLowerCase();
-
   let compra = prompt("Precio compra:");
-  if (!nombre || !compra) return;
-
   let tipo = prompt("¿Cajas? (si/no)");
 
+  if (!nombre || !compra) return;
+
   let producto = {
-    nombre,
+    nombre: nombre.toLowerCase(),
     compra: parseFloat(compra),
-    margen: 0.15,
-    estado: "disponible"
+    margen: 0.2,
+    estado: "disponible",
+    categoria: categoriaActual,
+    comprado: false
   };
 
   if (tipo.toLowerCase() === "si") {
@@ -142,30 +188,17 @@ function agregarProducto() {
     producto.unidades = parseInt(prompt("Unidades:")) || 0;
   }
 
+  let total = calcularStock(producto);
+
+  if (total === 0) producto.estado = "agotado";
+  else if (total < 5) producto.estado = "poco";
+
   productos.push(producto);
   guardar();
   mostrarProductos();
 }
 
-// 🔹 Cambiar estado y stock
-function noHay(i) {
-  let p = productos[i];
-  if (p.tipo === "cajas") p.cajas = 0;
-  else p.unidades = 0;
-  p.estado = "agotado";
-  agregarACompras(p);
-  guardar();
-  mostrarProductos();
-  mostrarCompras();
-}
-
-function poco(i) {
-  productos[i].estado = "poco stock";
-  guardar();
-  mostrarProductos();
-}
-
-// 🔹 Actualizar producto manual
+// 🔹 Actualizar
 function actualizar(i) {
   let p = productos[i];
 
@@ -178,6 +211,7 @@ function actualizar(i) {
   if (p.tipo === "cajas") {
     let cajas = prompt("Cajas:", p.cajas);
     let unidadesCaja = prompt("Unidades por caja:", p.unidadesPorCaja);
+
     if (cajas) p.cajas = parseInt(cajas);
     if (unidadesCaja) p.unidadesPorCaja = parseInt(unidadesCaja);
   } else {
@@ -189,30 +223,56 @@ function actualizar(i) {
 
   if (total === 0) {
     p.estado = "agotado";
-    agregarACompras(p);
+    p.comprado = false;
   } else if (total < 5) {
-    p.estado = "poco stock";
+    p.estado = "poco";
   } else {
     p.estado = "disponible";
   }
 
   guardar();
   mostrarProductos();
-  mostrarCompras();
 }
 
-// 🔹 Cambiar precio de venta desde input
-function cambiarVenta(index) {
-  const nuevaVenta = document.getElementById(`ventaInput${index}`).value;
-  if (!isNaN(nuevaVenta) && nuevaVenta > 0) {
-    productos[index].margen = (parseFloat(nuevaVenta) / productos[index].compra) - 1;
+// 🔹 Cambiar venta
+function cambiarVenta(i) {
+  let nueva = document.getElementById(`venta${i}`).value;
+
+  if (nueva > 0) {
+    productos[i].margen =
+      (parseFloat(nueva) / productos[i].compra) - 1;
+
     guardar();
     mostrarProductos();
-  } else {
-    alert("Ingresa un precio válido");
   }
 }
 
-// 🔹 Inicializar
-mostrarProductos();
-mostrarCompras();
+// 🔹 Estados
+function noHay(i) {
+  let p = productos[i];
+
+  if (p.tipo === "cajas") p.cajas = 0;
+  else p.unidades = 0;
+
+  p.estado = "agotado";
+  p.comprado = false;
+
+  guardar();
+  mostrarProductos();
+}
+
+function poco(i) {
+  productos[i].estado = "poco";
+  guardar();
+  mostrarProductos();
+}
+
+// 🔹 Eliminar producto
+function eliminarProducto(i) {
+  productos.splice(i, 1);
+  guardar();
+  mostrarProductos();
+}
+
+// 🔹 Inicio
+mostrarCategorias();
