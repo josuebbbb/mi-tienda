@@ -149,6 +149,22 @@ function calcularStock(p) {
     : p.unidades;
 }
 
+// 🔥 CORREGIR DATOS GUARDADOS (MAYÚSCULAS)
+function corregirDatos() {
+  categorias = categorias.map(c => capitalizar(c));
+
+  productos = productos.map(p => {
+    return {
+      ...p,
+      nombre: capitalizar(p.nombre),
+      categoria: capitalizar(p.categoria)
+    };
+  });
+
+  guardar();
+}
+
+corregirDatos();
 // 🔍 FILTRAR PRODUCTOS
 function filtrarProductos() {
   let texto = document.getElementById("buscadorProductos").value.toLowerCase();
