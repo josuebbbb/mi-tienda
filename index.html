@@ -13,6 +13,14 @@
 
 <button onclick="agregarCategoria()">📁 Nueva Categoría</button>
 
+<!-- 🔍 BUSCADOR CATEGORIAS -->
+<input 
+  type="text" 
+  id="buscadorCategorias" 
+  placeholder="Buscar categoría..."
+  oninput="filtrarCategorias()"
+/>
+
 <!-- 🟦 PRIMERO CATEGORIAS -->
 <div id="categorias"></div>
 
@@ -21,10 +29,19 @@
 
 <!-- 🟩 PRODUCTOS -->
 <div id="productosVista" style="display:none;">
+  
   <button onclick="volver()">⬅ Volver</button>
   <h2 id="titulo"></h2>
 
   <button onclick="agregarProducto()">➕ Agregar producto</button>
+
+  <!-- 🔍 BUSCADOR PRODUCTOS -->
+  <input 
+    type="text" 
+    id="buscadorProductos" 
+    placeholder="Buscar producto..."
+    oninput="filtrarProductos()"
+  />
 
   <ul id="lista"></ul>
 </div>
