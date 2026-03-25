@@ -104,9 +104,7 @@ function mostrarAgotados() {
     }
   });
 
-  if (!hay) {
-    cont.innerHTML += "<p>✔ Todo comprado</p>";
-  }
+  if (!hay) cont.innerHTML += "<p>✔ Todo comprado</p>";
 }
 
 // 🔹 Marcar comprado
@@ -149,22 +147,20 @@ function calcularStock(p) {
     : p.unidades;
 }
 
-// 🔥 CORREGIR DATOS GUARDADOS (MAYÚSCULAS)
-function corregirDatos() {
-  categorias = categorias.map(c => capitalizar(c));
+// 🔹 Estado automático
+function actualizarEstado(p) {
+  let total = calcularStock(p);
 
-  productos = productos.map(p => {
-    return {
-      ...p,
-      nombre: capitalizar(p.nombre),
-      categoria: capitalizar(p.categoria)
-    };
-  });
-
-  guardar();
+  if (total === 0) {
+    p.estado = "agotado";
+    p.comprado = false;
+  } else if (total < 5) {
+    p.estado = "poco";
+  } else {
+    p.estado = "disponible";
+  }
 }
 
-corregirDatos();
 // 🔍 FILTRAR PRODUCTOS
 function filtrarProductos() {
   let texto = document.getElementById("buscadorProductos").value.toLowerCase();
@@ -207,6 +203,20 @@ function mostrarProductos(filtro = "") {
 
         Stock: ${detalle} → ${total} (${p.estado})<br><br>
 
+        ${p.tipo === "cajas" ? `
+        Cajas:
+        <input type="number" id="cajas${index}" value="${p.cajas}" style="width:60px;">
+        Unid/Caja:
+        <input type="number" id="unidadCaja${index}" value="${p.unidadesPorCaja}" style="width:60px;">
+        <button onclick="guardarCajas(${index})">💾</button>
+        <br><br>
+        ` : `
+        Unidades:
+        <input type="number" id="unidades${index}" value="${p.unidades}" style="width:60px;">
+        <button onclick="guardarUnidades(${index})">💾</button>
+        <br><br>
+        `}
+
         <button onclick="noHay(${index})">❌ No hay</button>
         <button onclick="poco(${index})">⚠️ Poco</button>
         <button onclick="actualizar(${index})">🔄 Actualizar</button>
@@ -216,6 +226,29 @@ function mostrarProductos(filtro = "") {
 
     lista.appendChild(li);
   });
+}
+
+// 🔹 Guardar cajas directo
+function guardarCajas(i) {
+  let p = productos[i];
+
+  p.cajas = parseInt(document.getElementById(`cajas${i}`).value) || 0;
+  p.unidadesPorCaja = parseInt(document.getElementById(`unidadCaja${i}`).value) || 0;
+
+  actualizarEstado(p);
+  guardar();
+  mostrarProductos();
+}
+
+// 🔹 Guardar unidades directo
+function guardarUnidades(i) {
+  let p = productos[i];
+
+  p.unidades = parseInt(document.getElementById(`unidades${i}`).value) || 0;
+
+  actualizarEstado(p);
+  guardar();
+  mostrarProductos();
 }
 
 // 🔹 Agregar producto
@@ -244,17 +277,14 @@ function agregarProducto() {
     producto.unidades = parseInt(prompt("Unidades:")) || 0;
   }
 
-  let total = calcularStock(producto);
-
-  if (total === 0) producto.estado = "agotado";
-  else if (total < 5) producto.estado = "poco";
+  actualizarEstado(producto);
 
   productos.push(producto);
   guardar();
   mostrarProductos();
 }
 
-// 🔹 ACTUALIZAR (ARREGLADO)
+// 🔹 Actualizar clásico (se mantiene)
 function actualizar(i) {
   let p = productos[i];
 
@@ -264,28 +294,7 @@ function actualizar(i) {
   let margen = prompt("Margen:", p.margen);
   if (margen !== null) p.margen = parseFloat(margen);
 
-  if (p.tipo === "cajas") {
-    let cajas = prompt("Número de cajas:", p.cajas);
-    let unidadesCaja = prompt("Unidades por cada caja:", p.unidadesPorCaja);
-
-    if (cajas !== null) p.cajas = parseInt(cajas) || 0;
-    if (unidadesCaja !== null) p.unidadesPorCaja = parseInt(unidadesCaja) || 0;
-
-  } else {
-    let unidades = prompt("Número de unidades:", p.unidades);
-    if (unidades !== null) p.unidades = parseInt(unidades) || 0;
-  }
-
-  let total = calcularStock(p);
-
-  if (total === 0) {
-    p.estado = "agotado";
-    p.comprado = false;
-  } else if (total < 5) {
-    p.estado = "poco";
-  } else {
-    p.estado = "disponible";
-  }
+  actualizarEstado(p);
 
   guardar();
   mostrarProductos();
@@ -311,8 +320,7 @@ function noHay(i) {
   if (p.tipo === "cajas") p.cajas = 0;
   else p.unidades = 0;
 
-  p.estado = "agotado";
-  p.comprado = false;
+  actualizarEstado(p);
 
   guardar();
   mostrarProductos();
