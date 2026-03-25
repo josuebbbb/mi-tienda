@@ -1,436 +1,265 @@
-let productos = JSON.parse(localStorage.getItem("productos")) || [];
-let categorias = JSON.parse(localStorage.getItem("categorias")) || [];
-
-let categoriaActual = null;
-
-// 🔹 CAPITALIZAR
-function capitalizar(texto) {
-  return texto.charAt(0).toUpperCase() + texto.slice(1);
-}
-
-// 🔹 Guardar
-function guardar() {
-  localStorage.setItem("productos", JSON.stringify(productos));
-  localStorage.setItem("categorias", JSON.stringify(categorias));
-}
-
-// 🔹 Crear categoría
-function agregarCategoria() {
-  let nombre = prompt("Nombre de la categoría:");
-  if (!nombre) return;
-
-  nombre = capitalizar(nombre.toLowerCase());
-
-  categorias.push(nombre);
-  guardar();
-  mostrarCategorias();
-}
-
-// 🔹 ELIMINAR CATEGORIA
-function eliminarCategoria(cat) {
-  if (!confirm("¿Eliminar categoría y sus productos?")) return;
-
-  categorias = categorias.filter(c => c !== cat);
-  productos = productos.filter(p => p.categoria !== cat);
-
-  guardar();
-  mostrarCategorias();
-}
-
-// 🔍 FILTRAR CATEGORÍAS
-function filtrarCategorias() {
-  let texto = document.getElementById("buscadorCategorias").value.toLowerCase();
-
-  let cont = document.getElementById("categorias");
-  cont.innerHTML = "";
-
-  categorias.forEach(cat => {
-    if (!cat.toLowerCase().includes(texto)) return;
-
-    let div = document.createElement("div");
-    div.className = "carpeta";
-
-    div.innerHTML = `
-      <span class="eliminar-cat" onclick="event.stopPropagation(); eliminarCategoria('${cat}')">✖</span>
-      📁<br><strong>${capitalizar(cat)}</strong>
-    `;
-
-    div.onclick = () => abrirCategoria(cat);
-
-    cont.appendChild(div);
-  });
-}
-
-// 🔹 Mostrar categorías
-function mostrarCategorias() {
-  let cont = document.getElementById("categorias");
-  cont.innerHTML = "";
-
-  categorias.forEach(cat => {
-    let div = document.createElement("div");
-    div.className = "carpeta";
-
-    div.innerHTML = `
-      <span class="eliminar-cat" onclick="event.stopPropagation(); eliminarCategoria('${cat}')">✖</span>
-      📁<br><strong>${capitalizar(cat)}</strong>
-    `;
-
-    div.onclick = () => abrirCategoria(cat);
-
-    cont.appendChild(div);
-  });
-
-  mostrarAgotados();
-}
-
-// 🔴 Mostrar agotados
-function mostrarAgotados() {
-  let cont = document.getElementById("agotados");
-  cont.innerHTML = "<h3>❌ Productos agotados</h3>";
-
-  let hay = false;
-
-  productos.forEach((p, index) => {
-    if (p.estado === "agotado" && !p.comprado) {
-      let div = document.createElement("div");
-
-      div.innerHTML = `
-        • ${capitalizar(p.nombre)} (${p.categoria})
-        <button onclick="marcarComprado(${index})">✔</button>
-      `;
-
-      cont.appendChild(div);
-      hay = true;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Productos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f4f4;
     }
-  });
+    h1, h2 { text-align: center; }
+    .container {
+      display: flex;
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .panel {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      flex: 1;
+    }
+    .categorias { flex: 1; }
+    .productos { flex: 2; }
 
-  if (!hay) cont.innerHTML += "<p>✔ Todo comprado</p>";
-}
+    .carpeta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin: 5px 0;
+      background: #e3f2fd;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .carpeta:hover { background: #bbdefb; }
 
-// 🔹 Marcar comprado
-function marcarComprado(i) {
-  productos[i].comprado = true;
-  guardar();
-  mostrarCategorias();
-}
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+    }
+    button {
+      cursor: pointer;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover { background: #1565c0; }
+    .btn-eliminar {
+      background: #d32f2f;
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+    .btn-eliminar:hover { background: #b71c1c; }
 
-// 🔹 Abrir categoría
-function abrirCategoria(cat) {
-  categoriaActual = cat;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th { background: #1976d2; color: white; }
+  </style>
+</head>
+<body>
 
-  document.getElementById("categorias").style.display = "none";
-  document.getElementById("agotados").style.display = "none";
-  document.getElementById("productosVista").style.display = "block";
+  <h1>📦 Gestión de Productos</h1>
 
-  document.getElementById("titulo").innerText = "📁 " + capitalizar(cat);
+  <div class="container">
+    <!-- Panel de Categorías -->
+    <div class="panel categorias">
+      <h2>Categorías</h2>
+      <input type="text" id="buscadorCategorias" placeholder="Buscar categoría..." onkeyup="filtrarCategorias()">
+      <button onclick="agregarCategoria()">+ Nueva Categoría</button>
+      
+      <div id="categorias"></div>
+    </div>
 
-  mostrarProductos();
-}
-
-// 🔙 Volver
-function volver() {
-  document.getElementById("categorias").style.display = "grid";
-  document.getElementById("agotados").style.display = "block";
-  document.getElementById("productosVista").style.display = "none";
-
-  mostrarCategorias();
-}
-
-// 🔹 Calcular
-function calcularVenta(p) {
-  return (p.compra * (1 + p.margen)).toFixed(2);
-}
-
-function calcularStock(p) {
-  return p.tipo === "cajas"
-    ? p.cajas * p.unidadesPorCaja
-    : p.unidades;
-}
-
-// 🔹 Estado automático
-function actualizarEstado(p) {
-  let total = calcularStock(p);
-
-  if (total === 0) {
-    p.estado = "agotado";
-    p.comprado = false;
-  } else if (total < 5) {
-    p.estado = "poco";
-  } else {
-    p.estado = "disponible";
-  }
-}
-
-// 🔍 FILTRAR PRODUCTOS
-function filtrarProductos() {
-  let texto = document.getElementById("buscadorProductos").value.toLowerCase();
-  mostrarProductos(texto);
-}
-
-// 🔹 Mostrar productos
-function mostrarProductos(filtro = "") {
-  let lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  productos.forEach((p, index) => {
-    if (p.categoria !== categoriaActual) return;
-    if (!p.nombre.toLowerCase().includes(filtro)) return;
-
-    let venta = calcularVenta(p);
-    let total = calcularStock(p);
-
-    let detalle = p.tipo === "cajas"
-      ? `${p.cajas} cajas (${p.unidadesPorCaja})`
-      : `${p.unidades} unidades`;
-
-    let color =
-      p.estado === "agotado" ? "#e74c3c" :
-      p.estado === "poco" ? "#f39c12" :
-      "#27ae60";
-
-    let li = document.createElement("li");
-
-    li.innerHTML = `
-      <div style="border-left:5px solid ${color};padding:10px;">
-        
-        <strong>${capitalizar(p.nombre)}</strong><br><br>
-
-        Compra: $${p.compra}<br>
-
-        Venta:
-        <input type="number" id="venta${index}" value="${venta}" style="width:80px;">
-        <button onclick="cambiarVenta(${index})">💾</button><br><br>
-
-        Stock: ${detalle} → ${total} (${p.estado})<br><br>
-
-        ${p.tipo === "cajas" ? `
-        Cajas:
-        <input type="number" id="cajas${index}" value="${p.cajas}" style="width:60px;">
-        Unid/Caja:
-        <input type="number" id="unidadCaja${index}" value="${p.unidadesPorCaja}" style="width:60px;">
-        <button onclick="guardarCajas(${index})">💾</button>
-        <br><br>
-        ` : `
-        Unidades:
-        <input type="number" id="unidades${index}" value="${p.unidades}" style="width:60px;">
-        <button onclick="guardarUnidades(${index})">💾</button>
-        <br><br>
-        `}
-
-        <button onclick="restarUno(${index})">➖ 1</button>
-<button onclick="noHay(${index})">❌ No hay</button>
-<button onclick="poco(${index})">⚠️ Poco</button>
-<button onclick="actualizar(${index})">🔄 Actualizar</button>
-<button onclick="eliminarProducto(${index})">🗑️</button>
+    <!-- Panel de Productos -->
+    <div class="panel productos">
+      <h2 id="tituloProductos">Productos</h2>
+      
+      <div id="formularioProducto" style="display: none;">
+        <input type="text" id="nombreProducto" placeholder="Nombre del producto">
+        <input type="number" id="precioProducto" placeholder="Precio" step="0.01">
+        <button onclick="agregarProducto()">Agregar Producto</button>
       </div>
-    `;
 
-    lista.appendChild(li);
-  });
-}
+      <table id="tablaProductos">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 
-// 🔹 Guardar cajas directo
-function guardarCajas(i) {
-  let p = productos[i];
+  <script>
+    // ==================== DATOS ====================
+    let productos = JSON.parse(localStorage.getItem("productos")) || [];
+    let categorias = JSON.parse(localStorage.getItem("categorias")) || [];
+    let categoriaActual = null;
 
-  p.cajas = parseInt(document.getElementById(`cajas${i}`).value) || 0;
-  p.unidadesPorCaja = parseInt(document.getElementById(`unidadCaja${i}`).value) || 0;
-
-  actualizarEstado(p);
-  guardar();
-  mostrarProductos();
-}
-
-// 🔹 Guardar unidades directo
-function guardarUnidades(i) {
-  let p = productos[i];
-
-  p.unidades = parseInt(document.getElementById(`unidades${i}`).value) || 0;
-
-  actualizarEstado(p);
-  guardar();
-  mostrarProductos();
-}
-
-// 🔹 Agregar producto
-function agregarProducto() {
-  let nombre = prompt("Nombre:");
-  let compra = prompt("Precio compra:");
-  let tipo = prompt("¿Cajas? (si/no)");
-
-  if (!nombre || !compra) return;
-
-  let producto = {
-    nombre: capitalizar(nombre.toLowerCase()),
-    compra: parseFloat(compra),
-    margen: 0.2,
-    estado: "disponible",
-    categoria: categoriaActual,
-    comprado: false
-  };
-
-  if (tipo.toLowerCase() === "si") {
-    producto.tipo = "cajas";
-    producto.cajas = parseInt(prompt("Cajas:")) || 0;
-    producto.unidadesPorCaja = parseInt(prompt("Unidades por caja:")) || 0;
-  } else {
-    producto.tipo = "unidades";
-    producto.unidades = parseInt(prompt("Unidades:")) || 0;
-  }
-
-  actualizarEstado(producto);
-
-  productos.push(producto);
-  guardar();
-  mostrarProductos();
-}
-
-// 🔹 Actualizar clásico (se mantiene)
-function actualizar(i) {
-  let p = productos[i];
-
-  let compra = prompt("Precio compra:", p.compra);
-  if (compra !== null) p.compra = parseFloat(compra);
-
-  let margen = prompt("Margen:", p.margen);
-  if (margen !== null) p.margen = parseFloat(margen);
-
-  actualizarEstado(p);
-
-  guardar();
-  mostrarProductos();
-}
-
-// 🔹 Cambiar venta
-function cambiarVenta(i) {
-  let nueva = document.getElementById(`venta${i}`).value;
-
-  if (nueva > 0) {
-    productos[i].margen =
-      (parseFloat(nueva) / productos[i].compra) - 1;
-
-    guardar();
-    mostrarProductos();
-  }
-}
-
-// 🔹 Estados
-function noHay(i) {
-  let p = productos[i];
-
-  if (p.tipo === "cajas") p.cajas = 0;
-  else p.unidades = 0;
-
-  actualizarEstado(p);
-
-  guardar();
-  mostrarProductos();
-}
-
-function poco(i) {
-  productos[i].estado = "poco";
-  guardar();
-  mostrarProductos();
-}
-
-// 🔹 Eliminar producto
-function eliminarProducto(i) {
-  productos.splice(i, 1);
-  guardar();
-  mostrarProductos();
-}
-
-function vender(i) {
-  let p = productos[i];
-
-  if (p.tipo === "cajas") {
-    // Convertimos todo a unidades
-    let total = p.cajas * p.unidadesPorCaja;
-
-    if (total > 0) {
-      total -= 1; // vende 1 unidad
-
-      // recalcular cajas
-      p.cajas = Math.floor(total / p.unidadesPorCaja);
+    // ==================== FUNCIONES ====================
+    function capitalizar(texto) {
+      return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
     }
 
-  } else {
-    if (p.unidades > 0) {
-      p.unidades -= 1;
-    }
-  }
-
-  // 🔥 ACTUALIZAR ESTADO AUTOMÁTICO
-  let totalFinal = calcularStock(p);
-
-  if (totalFinal === 0) {
-    p.estado = "agotado";
-    p.comprado = false;
-  } else if (totalFinal < 5) {
-    p.estado = "poco";
-  } else {
-    p.estado = "disponible";
-  }
-
-  guardar();
-  mostrarProductos();
-}
-
-function restarUno(i) {
-  let p = productos[i];
-
-  if (p.tipo === "cajas") {
-    // total en unidades
-    let total = p.cajas * p.unidadesPorCaja;
-
-    if (total > 0) {
-      total -= 1;
-
-      // recalcular cajas
-      p.cajas = Math.floor(total / p.unidadesPorCaja);
+    function guardar() {
+      localStorage.setItem("productos", JSON.stringify(productos));
+      localStorage.setItem("categorias", JSON.stringify(categorias));
     }
 
-  } else {
-    if (p.unidades > 0) {
-      p.unidades -= 1;
-    }
-  }
-function vender(i) {
-  let p = productos[i];
+    // ==================== CATEGORÍAS ====================
+    function agregarCategoria() {
+      let nombre = prompt("Nombre de la categoría:");
+      if (!nombre || nombre.trim() === "") return;
 
-  if (p.tipo === "cajas") {
-    // Convertimos todo a unidades
-    let total = p.cajas * p.unidadesPorCaja;
+      nombre = capitalizar(nombre.trim());
 
-    if (total > 0) {
-      total -= 1; // vende 1 unidad
+      if (categorias.includes(nombre)) {
+        alert("Esa categoría ya existe");
+        return;
+      }
 
-      // recalcular cajas
-      p.cajas = Math.floor(total / p.unidadesPorCaja);
+      categorias.push(nombre);
+      guardar();
+      mostrarCategorias();
     }
 
-  } else {
-    if (p.unidades > 0) {
-      p.unidades -= 1;
+    function eliminarCategoria(cat) {
+      if (!confirm(`¿Eliminar la categoría "${cat}" y todos sus productos?`)) return;
+
+      categorias = categorias.filter(c => c !== cat);
+      productos = productos.filter(p => p.categoria !== cat);
+
+      if (categoriaActual === cat) {
+        categoriaActual = null;
+        document.getElementById("tituloProductos").textContent = "Productos";
+        document.getElementById("formularioProducto").style.display = "none";
+      }
+
+      guardar();
+      mostrarCategorias();
+      mostrarProductos();
     }
-  }
 
-  // 🔥 ACTUALIZAR ESTADO AUTOMÁTICO
-  let totalFinal = calcularStock(p);
+    function verCategoria(cat) {
+      categoriaActual = cat;
+      document.getElementById("tituloProductos").textContent = `Productos - ${cat}`;
+      document.getElementById("formularioProducto").style.display = "block";
+      mostrarProductos();
+    }
 
-  if (totalFinal === 0) {
-    p.estado = "agotado";
-    p.comprado = false;
-  } else if (totalFinal < 5) {
-    p.estado = "poco";
-  } else {
-    p.estado = "disponible";
-  }
+    function filtrarCategorias() {
+      let texto = document.getElementById("buscadorCategorias").value.toLowerCase().trim();
+      let cont = document.getElementById("categorias");
+      cont.innerHTML = "";
 
-  guardar();
-  mostrarProductos();
-}
- 
+      const filtradas = categorias.filter(cat => cat.toLowerCase().includes(texto));
 
-// 🔹 Inicio
-mostrarCategorias();
+      if (filtradas.length === 0) {
+        cont.innerHTML = `<p style="color:gray; padding:10px;">No se encontraron categorías</p>`;
+        return;
+      }
+
+      filtradas.forEach(cat => {
+        let div = document.createElement("div");
+        div.className = "carpeta";
+        div.innerHTML = `
+          <span onclick="verCategoria('${cat}')">${cat}</span>
+          <button onclick="eliminarCategoria('${cat}')" class="btn-eliminar">🗑</button>
+        `;
+        cont.appendChild(div);
+      });
+    }
+
+    function mostrarCategorias() {
+      filtrarCategorias();
+    }
+
+    // ==================== PRODUCTOS ====================
+    function agregarProducto() {
+      if (!categoriaActual) return;
+
+      const nombre = document.getElementById("nombreProducto").value.trim();
+      const precio = parseFloat(document.getElementById("precioProducto").value);
+
+      if (!nombre || isNaN(precio)) {
+        alert("Completa nombre y precio correctamente");
+        return;
+      }
+
+      productos.push({
+        id: Date.now(),
+        nombre: capitalizar(nombre),
+        precio: precio,
+        categoria: categoriaActual
+      });
+
+      guardar();
+      mostrarProductos();
+
+      // Limpiar formulario
+      document.getElementById("nombreProducto").value = "";
+      document.getElementById("precioProducto").value = "";
+    }
+
+    function eliminarProducto(id) {
+      if (!confirm("¿Eliminar este producto?")) return;
+      productos = productos.filter(p => p.id !== id);
+      guardar();
+      mostrarProductos();
+    }
+
+    function mostrarProductos() {
+      const tbody = document.querySelector("#tablaProductos tbody");
+      tbody.innerHTML = "";
+
+      const productosFiltrados = productos.filter(p => p.categoria === categoriaActual);
+
+      if (productosFiltrados.length === 0) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="3" style="text-align:center; color:gray;">No hay productos en esta categoría</td>`;
+        tbody.appendChild(tr);
+        return;
+      }
+
+      productosFiltrados.forEach(prod => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${prod.nombre}</td>
+          <td>$${prod.precio.toFixed(2)}</td>
+          <td><button onclick="eliminarProducto(${prod.id})" class="btn-eliminar">Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ==================== INICIO ====================
+    window.onload = function() {
+      mostrarCategorias();
+
+      // Si hay categorías, selecciona la primera automáticamente (opcional)
+      if (categorias.length > 0) {
+        verCategoria(categorias[0]);
+      }
+    };
+  </script>
+</body>
+</html>
